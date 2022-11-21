@@ -6,6 +6,8 @@ from flask_restful import Api, Resource, reqparse
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+from fixtures import GAME_START_SITUATION
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///saves.db'
@@ -21,65 +23,58 @@ class Save(db.Model):
     def __repr__(self):
         return '<Save %r>' % self.id
 
-#if os.path.exists('/API-tic-tac/instance/saves.db'):
-#with app.app_context():
-#    db.create_all()
-    
-GAME_DATA = {
-    'number of cage to win': None,
-    'cages': [
-        {
-            'x': 0,
-            'y': 0,
-            'condition': None,
-        },
-        {
-            'x': 0,
-            'y': 1,
-            'condition': None,
-        },
-        {
-            'x': 1,
-            'y': 0,
-            'condition': None,
-        },
-    ],
-}
-
-
-class Cage():
-    def __init__(x, y, condition):
-        self.x = 0
-        self.y = 0
-        self.condition = None
+if not os.path.exists('/home/user/API-tic-tac/instance/saves.db'):
+    with app.app_context():
+        db.create_all()
 
 
 class myResource(Resource):
+    json_dict = {}
+    
+    @app.route('/new-game')
+    def new_game():
+        for save in Save.query.all():
+            db.session.delete(save)
+        db.session.commit()
+        return '', 200
+
+
+    def save_game(self, name, data):
+        try:
+            db.session.add(Save(name=name, data_save=json.dumps(data)))
+            db.session.commit()
+        except:
+            return 'error save'
+
+    @app.route('/load_game/<int:id>')
+    def load_game(self, id=0):
+        for save in Save.query.all():
+            if save.id > id:
+                db.session.delete(save)
+            if save.id == id:
+                json_dict = save.data_save
+        db.session.commit()
+        return json_dict
+    
+    
+    def is_victory(self, _dict):
+        print(_dict)
+        return True
+    
+    
+    @app.route('/list-saves')
+    def get_list_saves():
+        return {save.id: save.name for save in Save.query.all()}
+
+
     def get(self, ):
         if request.is_json:
-            json_dict = request.get_json()
-            new_record = Save(
-                name='save1',
-                data_save=json.dumps(json_dict),
-            )
-            list_saves = Save.query.all()
-            for _ in list_saves:
-                print(_.name)
-            try:
-                db.session.add(new_record)
-                db.session.commit()
-            except:
-                return 'error'
-            return 'valid data', 200
-        return 'no valid data', 404
-    
-    
-    def put(self, ):
-        return 'put', 200
-    
-    def delete(self, ):
-        return 'delete', 200
-        
+            self.json_dict = request.get_json()
+            if self.is_victory(self.json_dict):
+                return 'Victory cross!', 200
+            self.save_game('Step', self.json_dict)
+            return '', 200
+        return '', 404
 
 
 if __name__ == '__main__':
