@@ -2,5 +2,5 @@ env/
 *.pyc
 __pycache__
 dist/
-db.sqlite3
+saves.db
 .env

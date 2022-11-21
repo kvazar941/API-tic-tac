@@ -1,0 +1,11 @@
+name: make-test
+on: push
+jobs:
+  my-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Step 1
+        run: |
+          pip install poetry
+          make test
