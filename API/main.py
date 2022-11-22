@@ -57,10 +57,67 @@ class myResource(Resource):
         return json_dict
     
     
-    def is_victory(self, _dict):
-        print(_dict)
-        return True
+    def check_list(self, _list, number_to_win):
+        groups = [
+            _list[index:index+number_to_win] for index in range(len(_list))
+        ]
+        for group in groups:
+            valid_group = list(range(group[0], group[0]+number_to_win, 1))
+            if group == valid_group:
+                return True
+        return False
     
+    
+    def get_gorisontal_line(self, cage, list_cages, number_to_win):
+        return [elem for elem in list_cages if elem['y'] == cage['y']]
+    
+    
+    def get_vertical_line(self, cage, list_cages, number_to_win):
+        return [elem for elem in list_cages if elem['x'] == cage['x']]
+    
+    
+    def find_series_numbers(self, list_cages, number_to_win):
+        for cage in list_cages:
+            list_gorisontal_cages = self.get_gorisontal_line(
+                cage,
+                list_cages,
+                number_to_win,
+            )
+            list_coordinates_x = [elem['x'] for elem in list_gorisontal_cages]
+            if self.check_list(list_coordinates_x, number_to_win):
+                return True
+            list_vertical_cages = self.get_vertical_line(
+                cage,
+                list_cages,
+                number_to_win,
+            )
+            list_coordinates_y = [elem['y'] for elem in list_vertical_cages]
+            if self.check_list(list_coordinates_y, number_to_win):
+                return True
+        return False
+        
+
+    def is_victory_cross(self, _dict):
+        list_cages = _dict['cages']
+        number_to_win = _dict['number of cage to win']
+        list_cages_cross = [
+            cage for cage in list_cages if cage['condition'] == 'cross'
+            ]
+        if self.find_series_numbers(list_cages_cross, number_to_win):
+            return True
+        return False
+        
+        
+    def is_victory_round(self, _dict):
+        list_cages = _dict['cages']
+        number_to_win = _dict['number of cage to win']
+        list_cages_round = [
+            cage for cage in list_cages if cage['condition'] == 'round'
+            ]
+        if self.find_series_numbers(list_cages_round, number_to_win):
+            return True
+        return False
+
     
     @app.route('/list-saves')
     def get_list_saves():
@@ -70,8 +127,10 @@ class myResource(Resource):
     def get(self, ):
         if request.is_json:
             self.json_dict = request.get_json()
-            if self.is_victory(self.json_dict):
+            if self.is_victory_cross(self.json_dict):
                 return 'Victory cross!', 200
+            if self.is_victory_round(self.json_dict):
+                return 'Victory round!', 200
             self.save_game('Step', self.json_dict)
             return '', 200
         return '', 404
