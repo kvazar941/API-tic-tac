@@ -139,5 +139,5 @@ class myResource(Resource):
 if __name__ == '__main__':
     api = Api(app)
     api.add_resource(myResource, '/tic-tac', '/tic-tac/')
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
     
