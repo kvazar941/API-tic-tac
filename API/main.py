@@ -6,11 +6,25 @@ from analisator import is_victory
 from flask import Flask, json, request
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
+from flask_swagger_ui import get_swaggerui_blueprint
+
+import yaml
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///saves.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+SWAGGER_URL = '/api/docs'
+API_URL = '/swagger'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': 'My App'
+    }
+)
 
 
 class Save(db.Model):
@@ -25,6 +39,12 @@ class Save(db.Model):
 
 class myResource(Resource):
     json_dict = {}
+    
+    @app.route('/swagger')
+    def create_swagger_spec():
+        with open('./API/api/docs/swagger.yaml') as file_name:
+            file_content = file_name.read()
+        return yaml.safe_load(file_content)
 
     def save_game(self, name, situation):
         try:
@@ -99,4 +119,5 @@ if __name__ == '__main__':
             db.create_all()
     api = Api(app)
     api.add_resource(myResource, '/')
+    app.register_blueprint(swaggerui_blueprint)
     app.run(debug=True, host='0.0.0.0')
