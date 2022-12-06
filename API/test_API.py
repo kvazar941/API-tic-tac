@@ -11,25 +11,25 @@ class TestAPI(unittest.TestCase):
     valid_status_code = 200
 
     def test_server_availability(self):
-        response = requests.get(
+        response = requests.post(
             self.url_new_game,
             json=GAME_START_SITUATION,
         )
         self.assertEqual(response.status_code, self.valid_status_code)
 
     def test_valid_data(self):
-        response = requests.get(
+        response = requests.post(
             self.url_new_game,
             json=GAME_START_SITUATION,
         )
         self.assertEqual(response.status_code, self.valid_status_code)
 
     def test_no_valid_data(self):
-        response = requests.get(self.url_new_game)
+        response = requests.post(self.url_new_game)
         self.assertNotEqual(response.status_code, self.valid_status_code)
 
     def test_win_cross(self):
-        response = requests.get(
+        response = requests.post(
             self.url_new_step,
             json=GAME_SITUATION_WIN_CROSS,
         )
@@ -37,7 +37,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.text, 'Victory cross!')
 
     def test_new_step(self):
-        response = requests.get(
+        response = requests.post(
             self.url_new_step,
             json=GAME_SITUATION_NEW_STEP,
         )
