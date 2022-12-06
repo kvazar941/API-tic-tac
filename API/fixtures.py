@@ -5,7 +5,7 @@
 
 GAME_SITUATION_WIN_CROSS = {
     'number of cage to win': 3,
-    'game_name': 'game 3',
+    'game_name': 'game 2',
     'cages': [
         {'x': 0, 'y': 0, 'condition': 'cross'},
         {'x': 0, 'y': 1, 'condition': 'round'},
@@ -19,7 +19,7 @@ GAME_SITUATION_WIN_CROSS = {
 
 GAME_SITUATION_NEW_STEP = {
     'number of cage to win': 3,
-    'game_name': 'game 3',
+    'game_name': 'game 2',
     'cages': [
         {'x': 0, 'y': 0, 'condition': 'cross'},
         {'x': 0, 'y': 1, 'condition': 'round'},
@@ -32,7 +32,7 @@ GAME_SITUATION_NEW_STEP = {
 
 GAME_START_SITUATION = {
     'number of cage to win': 3,
-    'game_name': 'game 3',
+    'game_name': 'game 2',
     'cages': [
         {'x': 0, 'y': 0, 'condition': 'cross'},
     ],

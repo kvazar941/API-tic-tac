@@ -3,10 +3,16 @@ info:
   title: API Tic-Tac
   version: 0.1.0
 servers:
-  - url: http://localhost:8000/
+  - url: http://127.0.0.1:5000/
     description: Dev server
 paths:
-  /saves:
+  /new-game:
     get:
-      summary: method
-      
+      summary: Метод создания новой игры
+      responses:
+        '200':
+          description: Условный ответ
+          content:
+            application/json:
+              schema:
+                $ref:
