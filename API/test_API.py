@@ -1,8 +1,12 @@
-"""test API module."""
+"""test_module."""
 import unittest
 
 import requests
-from fixtures import GAME_SITUATION_WIN_CROSS, GAME_START_SITUATION, GAME_SITUATION_NEW_STEP
+from fixtures import (
+    GAME_SITUATION_NEW_STEP,
+    GAME_SITUATION_WIN_CROSS,
+    GAME_START_SITUATION,
+)
 
 
 class TestAPI(unittest.TestCase):
@@ -42,4 +46,3 @@ class TestAPI(unittest.TestCase):
             json=GAME_SITUATION_NEW_STEP,
         )
         self.assertEqual(response.status_code, self.valid_status_code)
-        #self.assertEqual(response.text, '')

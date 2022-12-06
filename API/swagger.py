@@ -12,9 +12,10 @@ def get_config_swagger():
         SWAGGER_URL,
         API_URL,
         config={
-            'app_name': 'Api tic-tac'
-        }
+            'app_name': 'Api tic-tac',
+        },
     )
+
 
 def get_swagger_data():
     return read_file(YAML_TO_SWAGGER_URL)
