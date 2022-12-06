@@ -5,14 +5,226 @@ info:
 servers:
   - url: http://127.0.0.1:5000/
     description: Dev server
+tags:
+  - name: Операции над играми
 paths:
   /new-game:
-    get:
+    post:
       summary: Метод создания новой игры
+      requestBody:
+        description: Данные для новой игры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_game'
+        required: true
       responses:
         '200':
-          description: Условный ответ
+          description: Сообщение об успешном создании новой игры
+          examples:
+            text/html:
+              Game started successfully!
+        '404':
+          description: Сообщение о не корректном формате тела запроса
+          examples:
+            text/html:
+              No JSON data!
+  /new-step:
+    post:
+      summary: Метод создания нового шага игры
+      requestBody:
+        description: Данные для новой игры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_step'
+        required: true
+      responses:
+        '200':
+          description: Сообщение об успешном создании нового шага или победе одного из игроков
+          examples:
+            text/html:
+              'New step saved!'
+            text/html:
+              'Victory cross!'
+            text/html:
+              'Victory round!'
+        '404':
+          description: Сообщение о не корректном формате тела запроса
+          examples:
+            text/html:
+              No JSON data!
+  /list-saves:
+    post:
+      summary: Метод получения списка сохранений игры.
+      requestBody:
+        description: Данные для получения списка сохранений игры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_step'
+        required: true
+      responses:
+        '200':
+          description: Сообщение об успешной загрузке списка сохранений игры
           content:
             application/json:
               schema:
-                $ref:
+               $ref: '#/components/schemas/list_saves'
+        '404':
+          description: Сообщение о не корректном формате тела запроса
+          examples:
+            text/html:
+              No JSON data!
+  /load_game/{id}:
+    post:
+      summary: Метод получения данных указанного сохранения игры.
+      parameters:
+        - name: id
+          in: path
+          description: id сохраненной игры
+          required: true
+          shema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Данные для получения сохранения игры
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/new_step'
+        required: true
+      responses:
+        '200':
+          description: Сообщение об успешной загрузке данных сохранения игры
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/load_game'
+        '404':
+          description: Сообщение о не корректном формате тела запроса
+          examples:
+            text/html:
+              No JSON data!
+            
+components:
+  schemas:
+    cages_step_1:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int64
+          example: 0
+        y:
+          type: integer
+          format: int64
+          example: 0
+        condition:
+          type: string
+          example: cross
+    cages_step_2:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int64
+          example: 1
+        y:
+          type: integer
+          format: int64
+          example: 1
+        condition:
+          type: string
+          example: round
+    cages_step_3:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int64
+          example: 1
+        y:
+          type: integer
+          format: int64
+          example: 0
+        condition:
+          type: string
+          example: cross
+    cages_step_4:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int64
+          example: 1
+        y:
+          type: integer
+          format: int64
+          example: 2
+        condition:
+          type: string
+          example: round
+    cages_step_5:
+      type: object
+      properties:
+        x:
+          type: integer
+          format: int64
+          example: 2
+        y:
+          type: integer
+          format: int64
+          example: 0
+        condition:
+          type: string
+          example: cross
+    new_game:
+      type: object
+      properties:
+        cages:
+          type: array
+          items:
+            $ref: '#/components/schemas/cages_step_1'
+        number of cage to win:
+          type: integer
+          format: int64
+          example: 3
+        game_name:
+          type: string
+          example: game 1
+    new_step:
+      type: object
+      properties:
+        cages:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/cages_step_1'
+              - $ref: '#/components/schemas/cages_step_2'
+        number of cage to win:
+          type: integer
+          format: int64
+          example: 3
+        game_name:
+          type: string
+          example: game 1
+    list_saves:
+      type: object
+      properties:
+        1:
+          type: string
+          example: step 1
+    load_game:
+      type: object
+      properties:
+        cages:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/cages_step_1'
+              - $ref: '#/components/schemas/cages_step_2'
+              - $ref: '#/components/schemas/cages_step_3'
+        
+      
+              

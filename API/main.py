@@ -44,7 +44,7 @@ class myResource(Resource):
     def create_swagger_spec():
         return get_swagger_data()
     
-    @app.route('/new-game')
+    @app.route('/new-game', methods=['POST'])
     def run_new_game():
         """
         Deletes all saves from database.
@@ -55,7 +55,7 @@ class myResource(Resource):
         if request.is_json:
             json_dict = request.get_json()
         if not request.is_json:
-            return 'No JSON data', 404
+            return 'No JSON data!', 404
         try:
             a = Game.query.filter_by(name=json_dict['game_name']).all()
             for _ in a:
@@ -77,16 +77,17 @@ class myResource(Resource):
             db.session.commit()
         except:
             return 'error save'
-        return '', 200
+        return 'Game started successfully!', 200
 
-    @app.route('/new-step')
+    @app.route('/new-step', methods=['POST'])
     def run_new_step():
+        result = ''
         if request.is_json:
             json_dict = request.get_json()
             if is_victory((json_dict), 'cross'):
-                return 'Victory cross!', 200
+                result = 'Victory cross!'
             if is_victory((json_dict), 'round'):
-                return 'Victory round!', 200
+                result = 'Victory round!'
         if not request.is_json:
             return 'No JSON data', 404
         try:
@@ -100,17 +101,19 @@ class myResource(Resource):
             db.session.commit()
         except:
             return 'error save'
-        return '', 200
+        if result == '':
+            result = 'New step saved!' 
+        return result, 200
 
 
-    @app.route('/list')
-    def f():
-        a = {game.id: game.name for game in Game.query.all()}
-        b = {save.id: save.game_id for save in Saves.query.all()}
-        return {'a': a, 'b': b}
+    #@app.route('/list')
+    #def f():
+    #    a = {game.id: game.name for game in Game.query.all()}
+    #    b = {save.id: save.game_id for save in Saves.query.all()}
+    #    return {'a': a, 'b': b}
 
 
-    @app.route('/list-saves')
+    @app.route('/list-saves', methods=['POST'])
     def get_list_saves():
         """
         Returns a dictionary with a list of saved game situations.
@@ -128,7 +131,7 @@ class myResource(Resource):
             {save.id: save.name for save in res2}
         )
 
-    @app.route('/load_game/<int:id>')
+    @app.route('/load_game/<int:id>', methods=['POST'])
     def load_game(id=0):
         """
         Sets the current game situation by ID and deletes all subsequent saves.
