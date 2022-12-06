@@ -6,52 +6,109 @@ from analisator import is_victory
 from flask import Flask, json, request
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
-from flask_swagger_ui import get_swaggerui_blueprint
-
-import yaml
+from swagger import get_config_swagger, get_swagger_data
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///saves.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-SWAGGER_URL = '/api/docs'
-API_URL = '/swagger'
 
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': 'My App'
-    }
-)
+class Game(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(300), nullable=False)
+    saves = db.relationship(
+        'Saves',
+        backref='Game',
+        lazy='dynamic',
+        cascade = 'all, delete, delete-orphan',
+    )
+    
+    def __repr__(self):
+        return '<Game %r>' % self.id
 
-
-class Save(db.Model):
+class Saves(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(300), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     data_save = db.Column(db.JSON)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
 
     def __repr__(self):
-        return '<Save %r>' % self.id
-
+        return '<Saves %r>' % self.id
 
 class myResource(Resource):
     json_dict = {}
     
-    @app.route('/swagger')
+    @app.route('/specification')
     def create_swagger_spec():
-        with open('./API/api/docs/swagger.yaml') as file_name:
-            file_content = file_name.read()
-        return yaml.safe_load(file_content)
+        return get_swagger_data()
+    
+    @app.route('/new-game')
+    def run_new_game():
+        """
+        Deletes all saves from database.
 
-    def save_game(self, name, situation):
+        Returns:
+            dict
+        """
+        if request.is_json:
+            json_dict = request.get_json()
+        if not request.is_json:
+            return 'No JSON data', 404
         try:
-            db.session.add(Save(name=name, data_save=json.dumps(situation)))
+            a = Game.query.filter_by(name=json_dict['game_name']).all()
+            for _ in a:
+                db.session.delete(_)
+                db.session.commit()
+            db.session.add(
+                Game(
+                    name=json_dict['game_name'],
+                )
+            )
+            db.session.commit()
+            res = Game.query.filter_by(name=json_dict['game_name']).all()
+            res[0].saves.append(
+                Saves(
+                    name='name',
+                    data_save=json.dumps(json_dict)
+                )
+            )
             db.session.commit()
         except:
             return 'error save'
+        return '', 200
+
+    @app.route('/new-step')
+    def run_new_step():
+        if request.is_json:
+            json_dict = request.get_json()
+            if is_victory((json_dict), 'cross'):
+                return 'Victory cross!', 200
+            if is_victory((json_dict), 'round'):
+                return 'Victory round!', 200
+        if not request.is_json:
+            return 'No JSON data', 404
+        try:
+            res = Game.query.filter_by(name=json_dict['game_name']).all()
+            res[0].saves.append(
+                Saves(
+                    name='name',
+                    data_save=json.dumps(json_dict)
+                )
+            )
+            db.session.commit()
+        except:
+            return 'error save'
+        return '', 200
+
+
+    @app.route('/list')
+    def f():
+        a = {game.id: game.name for game in Game.query.all()}
+        b = {save.id: save.game_id for save in Saves.query.all()}
+        return {'a': a, 'b': b}
+
 
     @app.route('/list-saves')
     def get_list_saves():
@@ -61,23 +118,18 @@ class myResource(Resource):
         Returns:
             json
         """
-        return json.dumps({save.id: save.name for save in Save.query.all()})
-
-    @app.route('/new-game')
-    def new_game():
-        """
-        Deletes all saves from database.
-
-        Returns:
-            dict
-        """
-        for save in Save.query.all():
-            db.session.delete(save)
-        db.session.commit()
-        return '', 200
+        if request.is_json:
+            json_dict = request.get_json()
+        if not request.is_json:
+            return 'No JSON data', 404
+        res = Game.query.filter_by(name=json_dict['game_name']).all()
+        res2 = Saves.query.filter_by(game_id=res[0].id).all()
+        return json.dumps(
+            {save.id: save.name for save in res2}
+        )
 
     @app.route('/load_game/<int:id>')
-    def load_game(self, id=0):
+    def load_game(id=0):
         """
         Sets the current game situation by ID and deletes all subsequent saves.
 
@@ -87,30 +139,17 @@ class myResource(Resource):
         Returns:
             dict
         """
-        for save in Save.query.all():
-            if save.id > id:
-                db.session.delete(save)
-            if save.id == id:
-                json_dict = save.data_save
-        db.session.commit()
-        return json_dict
-
-    def get(self):
-        """
-        Check if the situation is winning for one of the players and if not, save the result in the database.
-
-        Returns:
-            str, int
-        """
         if request.is_json:
-            self.json_dict = request.get_json()
-            if is_victory((self.json_dict), 'cross'):
-                return 'Victory cross!', 200
-            if is_victory((self.json_dict), 'round'):
-                return 'Victory round!', 200
-            self.save_game('Step', self.json_dict)
-            return '', 200
-        return '', 404
+            json_dict = request.get_json()
+        if not request.is_json:
+            return 'No JSON data', 404
+        res = Game.query.filter_by(name=json_dict['game_name']).all()
+        res2 = Saves.query.filter_by(game_id=res[0].id).all()
+        res_dict = {}
+        for save in res2:
+            if int(save.id) == id:
+                res_dict = save.data_save
+        return json.dumps(res_dict)
 
 
 if __name__ == '__main__':
@@ -119,5 +158,5 @@ if __name__ == '__main__':
             db.create_all()
     api = Api(app)
     api.add_resource(myResource, '/')
-    app.register_blueprint(swaggerui_blueprint)
+    app.register_blueprint(get_config_swagger())
     app.run(debug=True, host='0.0.0.0')
